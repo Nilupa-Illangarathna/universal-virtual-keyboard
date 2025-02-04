@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Keyboard Modal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard/build/css/index.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        /* Modal styling */
+        #keyboardModal {
+            position: fixed;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            padding: 15px;
+            display: none;
+        }
+        #keyboardModal .header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #keyboardModal .close-button {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #ff6b6b;
+        }
+        #keyboard-container {
+            margin-top: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        /* Draggable modal */
+        .draggable {
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Virtual Keyboard Modal</h1>
+        <p>Focus on a text field below to open the virtual keyboard.</p>
+        <input type="text" id="inputField1" placeholder="Input field 1">
+        <input type="text" id="inputField2" placeholder="Input field 2">
+    </div>
+
+    <!-- Modal for the keyboard -->
+    <div id="keyboardModal">
+        <button class="close-button" onclick="closeKeyboard()">×</button>
+        <div class="header draggable">Virtual Keyboard</div>
+        <div id="keyboard-container" class="simple-keyboard"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-keyboard/build/index.js"></script>
+    <script>
+        let activeInput = null; // Track the active input field
+        let keyboard;
+
+        /**
+         * Initialize the virtual keyboard
+         */
+        function initializeKeyboard() {
+            keyboard = new window.SimpleKeyboard.default({
+                onChange: input => {
+                    if (activeInput) activeInput.value = input;
+                },
+                onKeyPress: button => {
+                    console.log("Button pressed:", button);
+                },
+                theme: "hg-theme-default hg-layout-default"
+            });
+        }
+
+        /**
+         * Open the virtual keyboard modal
+         */
+        function openKeyboard(inputElement) {
+            activeInput = inputElement; // Set the active input field
+            document.getElementById("keyboardModal").style.display = "block";
+            keyboard.setInput(activeInput.value); // Sync the keyboard with the input field
+        }
+
+        /**
+         * Close the virtual keyboard modal
+         */
+        function closeKeyboard() {
+            document.getElementById("keyboardModal").style.display = "none";
+            activeInput = null;
+        }
+
+        /**
+         * Handle input field focus
+         */
+        document.querySelectorAll("input[type='text']").forEach(input => {
+            input.addEventListener("focus", () => openKeyboard(input));
+        });
+
+        /**
+         * Make the modal draggable
+         */
+        const modal = document.getElementById("keyboardModal");
+        const header = modal.querySelector(".draggable");
+
+        header.addEventListener("mousedown", (e) => {
+            let offsetX = e.clientX - modal.getBoundingClientRect().left;
+            let offsetY = e.clientY - modal.getBoundingClientRect().top;
+
+            function onMouseMove(event) {
+                modal.style.left = `${event.clientX - offsetX}px`;
+                modal.style.top = `${event.clientY - offsetY}px`;
+            }
+
+            function onMouseUp() {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+            }
+
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+        });
+
+        // Initialize the keyboard on page load
+        initializeKeyboard();
+    </script>
+</body>
+</html>
