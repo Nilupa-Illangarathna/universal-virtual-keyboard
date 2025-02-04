@@ -36,7 +36,7 @@
             top: 20%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: rgba(255, 255, 255, 0.65); /* Adjusted opacity */
             color: black;
             width: 90%;
             max-width: 500px;
@@ -63,7 +63,7 @@
         }
         #keyboard-container {
             margin-top: 20px;
-            background: #f9f9f9;
+            background: rgba(249, 249, 249, 0.65); /* Adjusted opacity */
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
@@ -92,7 +92,9 @@
     <script>
         let activeInput = null; // Track the active input field
         let keyboard;
-
+        let isShifted = false; // Track shift state
+        let isCapsLocked = false; // Track caps lock state
+    
         /**
          * Initialize the virtual keyboard
          */
@@ -101,13 +103,57 @@
                 onChange: input => {
                     if (activeInput) activeInput.value = input;
                 },
-                onKeyPress: button => {
-                    console.log("Button pressed:", button);
+                onKeyPress: button => handleKeyPress(button),
+                layout: {
+                    default: [
+                        "` 1 2 3 4 5 6 7 8 9 0 - =",
+                        "q w e r t y u i o p [ ] \\ {bksp}",
+                        "a s d f g h j k l ; ' {enter}",
+                        "{shift} z x c v b n m , . /",
+                        "{space}"
+                    ],
+                    shift: [
+                        "~ ! @ # $ % ^ & * ( ) _ +",
+                        "Q W E R T Y U I O P { } | {bksp}",
+                        "{capslock} A S D F G H J K L : \" {enter}",
+                        "{shift} Z X C V B N M < > ?",
+                        "{space}"
+                    ]
                 },
-                theme: "hg-theme-default hg-layout-default"
+                theme: "hg-theme-default hg-layout-default",
+                debug: true // Enable debug messages
             });
         }
-
+    
+        /**
+         * Handle key presses (Shift, Caps Lock, Tab, etc.)
+         */
+        function handleKeyPress(button) {
+            if (button === "{shift}") {
+                isShifted = !isShifted;
+                keyboard.setOptions({
+                    layoutName: isShifted ? "shift" : "default"
+                });
+            } else if (button === "{capslock}") {
+                isCapsLocked = !isCapsLocked;
+                keyboard.setOptions({
+                    layoutName: isCapsLocked ? "shift" : "default"
+                });
+            } else if (button === "{tab}") {
+                // Handle Tab key behavior
+                let inputs = document.querySelectorAll("input[type='text']");
+                let index = Array.from(inputs).indexOf(activeInput);
+                let nextInput = inputs[(index + 1) % inputs.length];
+                nextInput.focus();
+                keyboard.setInput(nextInput.value); // Sync keyboard with the next input
+            } else if (button === "{enter}") {
+                console.log("Enter pressed");
+            } else if (button === "{bksp}") {
+                let value = keyboard.getInput();
+                keyboard.setInput(value.slice(0, -1));
+            }
+        }
+    
         /**
          * Open the virtual keyboard modal
          */
@@ -115,8 +161,9 @@
             activeInput = inputElement; // Set the active input field
             document.getElementById("keyboardModal").style.display = "block";
             keyboard.setInput(activeInput.value); // Sync the keyboard with the input field
+            setTimeout(() => inputElement.focus(), 0); // Ensure blinking cursor stays visible
         }
-
+    
         /**
          * Close the virtual keyboard modal
          */
@@ -124,40 +171,41 @@
             document.getElementById("keyboardModal").style.display = "none";
             activeInput = null;
         }
-
+    
         /**
          * Handle input field focus
          */
         document.querySelectorAll("input[type='text']").forEach(input => {
             input.addEventListener("focus", () => openKeyboard(input));
         });
-
+    
         /**
          * Make the modal draggable
          */
         const modal = document.getElementById("keyboardModal");
         const header = modal.querySelector(".draggable");
-
+    
         header.addEventListener("mousedown", (e) => {
             let offsetX = e.clientX - modal.getBoundingClientRect().left;
             let offsetY = e.clientY - modal.getBoundingClientRect().top;
-
+    
             function onMouseMove(event) {
                 modal.style.left = `${event.clientX - offsetX}px`;
                 modal.style.top = `${event.clientY - offsetY}px`;
             }
-
+    
             function onMouseUp() {
                 document.removeEventListener("mousemove", onMouseMove);
                 document.removeEventListener("mouseup", onMouseUp);
             }
-
+    
             document.addEventListener("mousemove", onMouseMove);
             document.addEventListener("mouseup", onMouseUp);
         });
-
+    
         // Initialize the keyboard on page load
         initializeKeyboard();
     </script>
+    
 </body>
 </html>
